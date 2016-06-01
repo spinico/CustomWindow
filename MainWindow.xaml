@@ -6,7 +6,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"   
         xmlns:clr="clr-namespace:System;assembly=mscorlib"
         xmlns:Window="clr-namespace:CustomWindow"   
-        xmlns:Properties="clr-namespace:CustomWindow.Properties"    
         mc:Ignorable="d"
         x:Name="Main"
         Title="{DynamicResource Title}"
@@ -32,15 +31,15 @@
                         <Border                            
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            Margin="0"                            
+                            BorderThickness="{TemplateBinding BorderThickness}"                                                        
+                            Padding="{TemplateBinding Padding}"
                             SnapsToDevicePixels="True">
                             <ContentPresenter                                    
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
                                 Content="{TemplateBinding Content}"
                                 ContentStringFormat="{TemplateBinding ContentStringFormat}"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                Margin="{TemplateBinding Padding}"
+                                Margin="{TemplateBinding Margin}"                                
                                 RecognizesAccessKey="True"
                                 SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
@@ -52,8 +51,8 @@
             <Setter Property="FontFamily" Value="Webdings"/>
             <Setter Property="FontSize" Value="15" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="Margin" Value="0,-3,0,0"/>
-            <Setter Property="Padding" Value="3,5,3,5"/>
+            <Setter Property="Margin" Value="0,0,0,0"/>
+            <Setter Property="Padding" Value="5,3,5,3"/>
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="1,0,1,1" />            
             <Style.Triggers>
