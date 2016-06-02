@@ -117,8 +117,8 @@
                         <Button DockPanel.Dock="Right" Click="Maximize" Style="{StaticResource MaximizeWindowButtonStyle}" ToolTip="Maximize this window" />
                         <Button DockPanel.Dock="Right" Click="Minimize" Style="{StaticResource MinimizeWindowButtonStyle}" ToolTip="Minimize this window" />
                         <StatusBar Background="Transparent" Margin="0,0,0,-4" MouseDoubleClick="Maximize" MouseMove="Move"  >                            
-                            <Image Width="24" Height="24" Margin="-3,-2,0,2" Style="{DynamicResource TitleImageStyle}"/>
-                            <TextBlock Margin="0,0,0,5" FontSize="12" Text="{DynamicResource Title}">
+                            <Image Width="22" Height="22" Margin="-3,-2,0,2" Style="{DynamicResource TitleImageStyle}"/>
+                            <TextBlock Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold" Text="{DynamicResource Title}">
                                 <TextBlock.Style>
                                     <Style TargetType="{x:Type TextBlock}">
                                         <Setter Property="Foreground" Value="White"/>
