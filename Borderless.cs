@@ -4,6 +4,7 @@
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Windows;
+    using System.Windows.Controls;
     using System.Windows.Controls.Primitives;
     using System.Windows.Input;
     using System.Windows.Interop;
@@ -13,6 +14,21 @@
 
     public partial class Borderless : Window
     {
+        private const int BlurRadius = 5;
+        private const int BorderWidth = 6;
+
+        /// <summary>
+        /// Indicate if the window was snapped on one side
+        /// so it can be restored correctly
+        /// </summary>
+        private bool IsSnapped { get; set; }
+
+        /// <summary>
+        /// Indicate if the window is maximized from a mouse 
+        /// double click action
+        /// </summary>
+        private bool IsMaximizing { get; set; }
+
         public void Close(object sender, RoutedEventArgs e)
         {
             this.Close();
@@ -25,31 +41,44 @@
 
         public void Maximize(object sender, RoutedEventArgs e)
         {
-            if (this.WindowState == WindowState.Maximized)
+            this.WindowState = this.WindowState == WindowState.Maximized ?
+                               WindowState.Normal : WindowState.Maximized;
+        }
+
+        public void RestoreOrMaximize(object sender, MouseButtonEventArgs e)
+        {
+            if (this.IsSnapped)
             {
+                this.Top = this.RestoreBounds.Top;
+                this.Left = this.RestoreBounds.Left;
+                this.Width = this.RestoreBounds.Width;
+                this.Height = this.RestoreBounds.Height;
+
                 this.WindowState = WindowState.Normal;
-                this.ResizeMode = ResizeMode.CanResize;
             }
-            else if (this.WindowState == WindowState.Normal)
+            else
             {
-                // Must set to NoResize before changing state
-                // so the window get resized fullscreen as expected
-                this.ResizeMode = ResizeMode.NoResize;
-                this.WindowState = WindowState.Maximized;
-            }
+                this.WindowState = this.WindowState == WindowState.Maximized ?
+                                   WindowState.Normal : WindowState.Maximized;
+
+                // Adding guard to fix issue with OnMouseMove handler being called
+                // on a double click maximize action 
+                this.IsMaximizing = this.WindowState == WindowState.Maximized;
+            }            
         }
 
         /// <summary>
         /// Support for custom window drag move and 
-        /// unsnaping from maximized window state
+        /// restore from maximized window state
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        public void Move(object sender, MouseEventArgs e)
+        public void OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                // Are we unsnapping from maximized?
+            base.OnMouseMove(e);
+
+            if (e.LeftButton == MouseButtonState.Pressed && !this.IsMaximizing)
+            {                
                 if (this.WindowState == WindowState.Maximized)
                 {
                     IntPtr hwnd = new WindowInteropHelper(this).EnsureHandle();
@@ -60,20 +89,50 @@
                     Point position = e.GetPosition(null); //e.MouseDevice.GetPosition(null);
                     Point screen = this.PointToScreen(position);
                     Point point = this.PointFromScreen(position);
-                    
+
+                    // X coordinate can be negative on multi monitor setups
                     point.X = point.X > 0 ? point.X : (monitorArea.Work.Width + point.X);
 
-                    double restoreWidth = this.RestoreBounds.Width * (point.X / monitorArea.Work.Width);
+                    var statusBar = sender as StatusBar;
 
-                    this.Left = screen.X - restoreWidth - monitorArea.Offset.x;
-                    this.Top = monitorArea.Offset.y;
+                    double leftMargin = screen.X - this.PointToScreen(e.GetPosition(statusBar)).X;
+                    double rightMargin = (monitorArea.Work.Width - statusBar.ActualWidth - leftMargin);
+
+                    double dragAreaWidth = monitorArea.Work.Width - leftMargin - rightMargin;
+                    double restoreDragAreaWidth = this.RestoreBounds.Width - leftMargin - rightMargin;
+                    double x = restoreDragAreaWidth * point.X / dragAreaWidth;
+                                        
+                    double leftBound = monitorArea.Work.Left + this.RestoreBounds.Width - rightMargin;
+                    double rightBound = monitorArea.Work.Left + monitorArea.Work.Width - this.RestoreBounds.Width;
+
+                    // The restore bounds width is within the left bound region width
+                    if (screen.X < leftBound) 
+                    {
+                        this.Left = monitorArea.Work.Left + monitorArea.Offset.x;
+                    }
+                    // The restore bounds width is shorter than the left / right bound region width
+                    else if ((screen.X > leftBound) && (screen.X < rightBound))
+                    {
+                        this.Left = screen.X - monitorArea.Offset.x - leftMargin - x;
+                    }
+                    // The restore bounds width is within the right bound region width
+                    else if (screen.X > rightBound)
+                    {
+                        this.Left = rightBound;
+                    }
+
+                    // Take into account the DropShadow effect BlurRadius width
+                    this.Left -= BlurRadius;
+                    this.Top = monitorArea.Offset.y - BlurRadius;
 
                     this.WindowState = WindowState.Normal;
-                    this.ResizeMode = ResizeMode.CanResize;
                 }
-
                 this.DragMove();
             }
+
+            this.IsMaximizing = false;
+
+            e.Handled = true;
         }
 
         public Borderless()
@@ -104,7 +163,10 @@
 
             TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
             TextOptions.SetTextHintingMode(this, TextHintingMode.Auto);
-            TextOptions.SetTextRenderingMode(this, TextRenderingMode.Auto);            
+            TextOptions.SetTextRenderingMode(this, TextRenderingMode.Auto);
+
+            // For better icon rendering -> RenderOptions.BitmapScalingMode="HighQuality" (same as Fant mode)
+            RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
         }
 
         /// <summary>
@@ -239,7 +301,7 @@
                             // LOWORD
                             int width = ((int)lParam & 0x0000ffff); 
                                 
-                            //HIWORD
+                            // HIWORD
                             int height = (int)((int)lParam & 0xffff0000) >> 16;
 
                             Window window = GetWindow(hwnd);
@@ -249,21 +311,21 @@
                             if (height == monitorArea.Work.Height || 
                                 width == SystemParameters.VirtualScreenWidth ||
                                 height == SystemParameters.VirtualScreenHeight)
-                            {                                    
+                            {
+                                (window as Borderless).IsSnapped = true;
+                                                                     
                                 DisableDropShadow(window);
 
                                 UpdateResizeBorder(window, monitorArea,window.Left, window.Top, width, height);
                             }
                             else
                             {
+                                (window as Borderless).IsSnapped = false;
+
                                 EnableDropShadow(window);
                                 EnableResizeBorder(window);
-                            }
+                            }                           
                         }
-                    }
-                    else if (resizing == SIZE_MINIMIZED)
-                    {
-                        // Nothing to do
                     }
                     else if (resizing == SIZE_MAXIMIZED)
                     {
@@ -323,7 +385,7 @@
                 break;
             }
 
-            return IntPtr.Zero; //(IntPtr)0;
+            return IntPtr.Zero;
         }
 
         /// <summary>
@@ -341,12 +403,10 @@
         /// <param name="height"></param>
         private static void UpdateResizeBorder(Window window, MonitorArea monitorArea, double left, double top, double width, double height)
         {
-            const double borderWidth = 6;
-            
-            double leftBorder   = left <= monitorArea.Offset.x ? 0 : borderWidth;
-            double rightBorder  = left + width >= SystemParameters.VirtualScreenWidth ? 0 : borderWidth;
-            double topBorder    = top <= monitorArea.Offset.y ? 0 : borderWidth;
-            double bottomBorder = top + height >= SystemParameters.VirtualScreenHeight ? 0 : borderWidth;
+            double leftBorder   = left <= monitorArea.Offset.x ? 0 : BorderWidth;
+            double rightBorder  = left + width >= SystemParameters.VirtualScreenWidth ? 0 : BorderWidth;
+            double topBorder    = top <= monitorArea.Offset.y ? 0 : BorderWidth;
+            double bottomBorder = top + height >= SystemParameters.VirtualScreenHeight ? 0 : BorderWidth;
 
             EnableResizeBorder(window, leftBorder, topBorder, rightBorder, bottomBorder);            
         }
@@ -382,14 +442,14 @@
             return null;
         }
 
-        private static void EnableDropShadow(Window window, double blurRadius = 5)
+        private static void EnableDropShadow(Window window)
         {
             var dropShadowEffect = window.Effect as DropShadowEffect;
 
             if (dropShadowEffect == null)
             {
                 dropShadowEffect             = new DropShadowEffect();
-                dropShadowEffect.BlurRadius  = blurRadius;
+                dropShadowEffect.BlurRadius  = BlurRadius;
                 dropShadowEffect.ShadowDepth = 0;
                 dropShadowEffect.Opacity     = 0.8;
                 dropShadowEffect.Color       = Colors.Black;
@@ -407,9 +467,9 @@
             window.BorderThickness = new Thickness(0);
         }
 
-        private static void EnableResizeBorder(Window window, double uniformLength = 6)
+        private static void EnableResizeBorder(Window window)
         {
-            EnableResizeBorder(window, uniformLength, uniformLength, uniformLength, uniformLength);
+            EnableResizeBorder(window, BorderWidth, BorderWidth, BorderWidth, BorderWidth);
         }
 
         private static void EnableResizeBorder(Window window, double left, double top, double right, double bottom)
@@ -435,5 +495,96 @@
 
             WindowChrome.SetWindowChrome(window, chrome);
         }
+
+        #region System Menu
+
+        private const Int32 WM_SYSCOMMAND = 0x112;
+        private const UInt32 TPM_LEFTALIGN = 0x0000;
+        private const UInt32 TPM_RETURNCMD = 0x0100;
+        private const UInt32 MF_ENABLED = 0x00000000;
+        private const UInt32 MF_GRAYED = 0x00000001;
+        private const UInt32 MF_DISABLED = 0x00000002;
+        private const UInt32 SC_MAXIMIZE = 0xF030;
+        private const UInt32 SC_RESTORE = 0xF120;
+        private const UInt32 SC_MOVE = 0xF010;
+        private const UInt32 SC_SIZE = 0xF000;
+        private const UInt32 SC_CLOSE = 0xF060;
+        private const UInt32 MF_BYCOMMAND = 0x00000000;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+        [DllImport("user32.dll")]
+        static extern int TrackPopupMenuEx(IntPtr hmenu, uint fuFlags, int x, int y, IntPtr hwnd, IntPtr lptpm);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        static extern bool EnableMenuItem(IntPtr hMenu, uint uIDEnableItem, uint uEnable);
+
+        [DllImport("user32.dll")]
+        static extern bool DeleteMenu(IntPtr hMenu, uint uPosition, uint uFlags);
+
+        public void ShowSystemMenu(object sender, MouseButtonEventArgs e)
+        {
+            Point position = e.GetPosition(null);
+
+            if (sender is DockPanel)
+            {
+                if (e.ChangedButton == MouseButton.Right)
+                {
+                    ShowSystemMenu(position);
+                }
+            }
+            else if (e.ChangedButton == MouseButton.Left)
+            {
+                if (e.ClickCount == 2) 
+                {
+                    // The default behavior on a double mouse click over the
+                    // window icon is to close the application
+                    this.Close();
+                }
+                else 
+                {
+                    ShowSystemMenu(position);
+                }
+            }
+        }
+
+        private void ShowSystemMenu(Point position, int offset = 10) 
+        {
+            WindowInteropHelper helper = new WindowInteropHelper(this);
+            IntPtr callingWindow = helper.Handle;
+            IntPtr wMenu = GetSystemMenu(callingWindow, false);
+
+            // The resizing is not supported (but still needs to be defined otherwise the window cannot be resized)
+            EnableMenuItem(wMenu, SC_SIZE, MF_GRAYED);
+
+            // The move command is not supported
+            DeleteMenu(wMenu, SC_MOVE, MF_BYCOMMAND);
+
+            // Display the menu
+            if (this.WindowState == WindowState.Maximized)
+            {
+                EnableMenuItem(wMenu, SC_MAXIMIZE, MF_GRAYED);
+            }
+            else
+            {
+                EnableMenuItem(wMenu, SC_MAXIMIZE, MF_ENABLED);
+            }
+
+            Point point = this.PointToScreen(position);
+
+            int value = TrackPopupMenuEx(wMenu, TPM_LEFTALIGN | TPM_RETURNCMD, (int)point.X, (int)point.Y + offset, callingWindow, IntPtr.Zero);
+
+            // On error of if user cancel, value returned by TrackPopupMenuEx is 0
+            if (value == 0)
+                return;
+
+            PostMessage(callingWindow, WM_SYSCOMMAND, new IntPtr(value), IntPtr.Zero);
+        }
+
+        #endregion System Menu
     }
 }

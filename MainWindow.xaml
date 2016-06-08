@@ -1,7 +1,7 @@
 ﻿<Window:Borderless  
         x:Class="CustomWindow.MainWindow"   
-	    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-	    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"   
         xmlns:clr="clr-namespace:System;assembly=mscorlib"
@@ -16,11 +16,8 @@
         AllowsTransparency="True"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
-        RenderOptions.BitmapScalingMode="HighQuality"
         >
 
-    <!-- For better logo rendering RenderOptions.BitmapScalingMode="HighQuality" : same as Fant mode -->
-    
     <Window.Resources>
         <BitmapImage x:Key="Logo" UriSource="Images/logo-active.png" />
         <clr:String x:Key="Title">Custom Window - a borderless WPF window demo</clr:String>
@@ -112,13 +109,13 @@
                     </Style>
                 </Border.Style>
                 <Grid>
-                    <DockPanel>
+                    <DockPanel MouseDown="ShowSystemMenu">
                         <Button DockPanel.Dock="Right" Click="Close" Style="{StaticResource CloseWindowButtonStyle}" ToolTip="Close this window" />
                         <Button DockPanel.Dock="Right" Click="Maximize" Style="{StaticResource MaximizeWindowButtonStyle}" ToolTip="Maximize this window" />
                         <Button DockPanel.Dock="Right" Click="Minimize" Style="{StaticResource MinimizeWindowButtonStyle}" ToolTip="Minimize this window" />
-                        <StatusBar Background="Transparent" Margin="0,0,0,-4" MouseDoubleClick="Maximize" MouseMove="Move"  >                            
-                            <Image Width="22" Height="22" Margin="-3,-2,0,2" Style="{DynamicResource TitleImageStyle}"/>
-                            <TextBlock Margin="0,0,0,5" FontSize="12" FontWeight="SemiBold" Text="{DynamicResource Title}">
+                        <Image Width="24" Height="24" Margin="0,1,0,0" Style="{DynamicResource TitleImageStyle}" MouseDown="ShowSystemMenu" />
+                        <StatusBar Background="Transparent" MouseMove="OnMouseMove" MouseDoubleClick="RestoreOrMaximize">                                                        
+                            <TextBlock FontSize="12" FontWeight="SemiBold" Text="{DynamicResource Title}">
                                 <TextBlock.Style>
                                     <Style TargetType="{x:Type TextBlock}">
                                         <Setter Property="Foreground" Value="White"/>
