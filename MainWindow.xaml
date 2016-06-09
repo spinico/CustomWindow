@@ -16,6 +16,8 @@
         AllowsTransparency="True"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
+        DropShadowRadius="10"
+        Background="White"
         >
 
     <Window.Resources>
@@ -58,6 +60,9 @@
                     <Setter Property="Background" Value="#FFFFFBD6" />
                     <Setter Property="BorderBrush" Value="#FFFFC500" />
                 </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FFFFD854" />
+                </Trigger>
                 <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="False">
                     <Setter Property="Foreground" Value="DarkGray"/>
                 </DataTrigger>
@@ -83,15 +88,19 @@
         <Border.Style>
             <Style TargetType="{x:Type Border}">
                 <Setter Property="BorderBrush" Value="Black"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Opacity" Value="1"/>
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="False">
-                        <Setter Property="BorderBrush" Value="DarkGray"/>
+                        <Setter Property="BorderBrush" Value="Gray"/>
+                        <Setter Property="Background" Value="LightGray"/>
+                        <Setter Property="Opacity" Value="0.8"/>
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
         </Border.Style>
-        <Grid Background="White">
 
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="25"/>
                 <RowDefinition Height="*"/>
@@ -103,19 +112,19 @@
                         <Setter Property="Background" Value="#FF1863A2" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="False">
-                                <Setter Property="Background" Value="LightGray"/>
+                                <Setter Property="Background" Value="Gray"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
                 <Grid>
-                    <DockPanel MouseDown="ShowSystemMenu">
+                    <DockPanel>
                         <Button DockPanel.Dock="Right" Click="Close" Style="{StaticResource CloseWindowButtonStyle}" ToolTip="Close this window" />
                         <Button DockPanel.Dock="Right" Click="Maximize" Style="{StaticResource MaximizeWindowButtonStyle}" ToolTip="Maximize this window" />
                         <Button DockPanel.Dock="Right" Click="Minimize" Style="{StaticResource MinimizeWindowButtonStyle}" ToolTip="Minimize this window" />
                         <Image Width="24" Height="24" Margin="0,1,0,0" Style="{DynamicResource TitleImageStyle}" MouseDown="ShowSystemMenu" />
-                        <StatusBar Background="Transparent" MouseMove="OnMouseMove" MouseDoubleClick="RestoreOrMaximize">                                                        
-                            <TextBlock FontSize="12" FontWeight="SemiBold" Text="{DynamicResource Title}">
+                        <StatusBar Background="Transparent" MouseMove="OnMouseMove" MouseRightButtonDown="ShowSystemMenu" MouseDoubleClick="RestoreOrMaximize">
+                            <TextBlock FontSize="12" Text="{DynamicResource Title}">
                                 <TextBlock.Style>
                                     <Style TargetType="{x:Type TextBlock}">
                                         <Setter Property="Foreground" Value="White"/>
@@ -128,19 +137,26 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </StatusBar>
-                        
                     </DockPanel>
                 </Grid>
             </Border>
 
-            
-            <Border BorderThickness="0" Grid.Row="1" Background="#FFF1F1F1">
+
+            <Border Grid.Row="1">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="40*"/>                        
+                        <RowDefinition Height="*"/>                        
                     </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="Window's content here" FontSize="26" VerticalAlignment="Center" HorizontalAlignment="Center" FontStretch="Normal" FontFamily="Times New Roman" />
+
+                    <TextBlock FontSize="26" FontStretch="Normal" FontFamily="Times New Roman" 
+                               VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0}x{1}">
+                                <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" />
+                                <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
                 </Grid>    
                 
             </Border>
