@@ -16,7 +16,7 @@
         AllowsTransparency="True"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
-        DropShadowRadius="10"
+        DropShadowRadius="5"
         Background="White"
         >
 

@@ -493,15 +493,13 @@
                 dropShadowEffect               = new DropShadowEffect();
                 dropShadowEffect.BlurRadius    = (window as Borderless).DropShadowRadius; // Default is 5
                 dropShadowEffect.Direction     = 315;  // Default is 315              
-                dropShadowEffect.ShadowDepth   = 2; // Default is 5
-                dropShadowEffect.Opacity       = 0.8; // Defaul is 1
+                dropShadowEffect.ShadowDepth   = 3; // Default is 5
+                dropShadowEffect.Opacity       = 0.5; // Defaul is 1
                 dropShadowEffect.Color         = Colors.Black;
                 dropShadowEffect.RenderingBias = RenderingBias.Performance; // Default is Performance
 
                 window.Effect = dropShadowEffect;
             }
-
-            dropShadowEffect.Opacity = 0.8;
 
             window.BorderThickness = new Thickness(dropShadowEffect.BlurRadius);            
         }
