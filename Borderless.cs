@@ -82,8 +82,6 @@
         /// <param name="e"></param>
         public void OnMouseMove(object sender, MouseEventArgs e)
         {
-            double opacity = this.Opacity;
-
             base.OnMouseMove(e);
 
             if (e.LeftButton == MouseButtonState.Pressed && !this.IsMaximizing)
@@ -137,15 +135,14 @@
                     this.WindowState = WindowState.Normal;
                 }
 
-                if (this.AllowsTransparency)
-                {
-                    this.Opacity = opacity / 2;
-                }
+                double opacity = this.Opacity;
+
+                this.Opacity = this.AllowsTransparency ? opacity / 2 : opacity;
 
                 this.DragMove();
-            }
 
-            this.Opacity = opacity;
+                this.Opacity = opacity;
+            }
 
             this.IsMaximizing = false;
 
@@ -315,7 +312,9 @@
         }
 
         private const Int32 WM_WINDOWPOSCHANGING = 0x0046;
+        private const Int32 WM_WINDOWPOSCHANGED = 0x0047;
         private const Int32 SWP_NOSIZE = 0x0001;
+        private const Int32 SWP_NOMOVE = 0x0002;
         private const Int32 WM_GETMINMAXINFO = 0x0024;
         private const Int32 MONITOR_DEFAULTTONEAREST = 0x00000002;
         private const Int32 WM_SIZE = 0x0005;
@@ -405,22 +404,22 @@
                 break;
 
                 // To activate/deactivate border resize handles from window position
-                case WM_WINDOWPOSCHANGING:
+                case WM_WINDOWPOSCHANGED:
                 {
                     WINDOWPOS windowPos = (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS));
 
-                    if ((windowPos.flags & SWP_NOSIZE) != SWP_NOSIZE)
+                    Window window = GetWindow(hwnd);
+
+                    // When window is snapped and position changes
+                    if ((windowPos.flags & SWP_NOMOVE) != SWP_NOMOVE && (window as Borderless).IsSnapped)
                     {
                         MonitorArea monitorArea = GetMonitorArea(hwnd);
 
                         if (monitorArea != null)
                         {
-                            Window window = GetWindow(hwnd);
-
                             UpdateResizeBorder(window, monitorArea, windowPos.x, windowPos.y, windowPos.cx, windowPos.cy);
                         }
                     }
-
                 }
                 break;
             }
@@ -433,7 +432,7 @@
         /// the current window position and size
         /// </summary>
         /// <remarks>
-        /// The resize border maximum size is the virtual screen limits
+        /// The maximum window size is the virtual screen limits
         /// </remarks>
         /// <param name="window"></param>
         /// <param name="monitorArea"></param>
@@ -445,12 +444,15 @@
         {
             double borderWidth = (window as Borderless).ResizeBorderWidth;
 
-            double leftBorder   = left <= monitorArea.Offset.x ? 0 : borderWidth;
-            double rightBorder  = left + width >= SystemParameters.VirtualScreenWidth ? 0 : borderWidth;
-            double topBorder    = top <= monitorArea.Offset.y ? 0 : borderWidth;
-            double bottomBorder = top + height >= SystemParameters.VirtualScreenHeight ? 0 : borderWidth;
+            double taskBarWidth = monitorArea.Display.Width - monitorArea.Work.Width;
+            double taskBarHeight = monitorArea.Display.Height - monitorArea.Work.Height;
 
-            EnableResizeBorder(window, leftBorder, topBorder, rightBorder, bottomBorder);            
+            double leftBorder = left <= monitorArea.Offset.x ? 0 : borderWidth;
+            double rightBorder = left + width + taskBarWidth >= SystemParameters.VirtualScreenWidth ? 0 : borderWidth;
+            double topBorder = top <= monitorArea.Offset.y ? 0 : borderWidth;
+            double bottomBorder = top + height + taskBarHeight >= SystemParameters.VirtualScreenHeight ? 0 : borderWidth;
+
+            EnableResizeBorder(window, leftBorder, topBorder, rightBorder, bottomBorder);
         }
 
         /// <summary>
