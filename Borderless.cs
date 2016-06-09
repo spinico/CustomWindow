@@ -4,7 +4,6 @@
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Windows;
-    using System.Windows.Controls;
     using System.Windows.Controls.Primitives;
     using System.Windows.Input;
     using System.Windows.Interop;
@@ -14,8 +13,16 @@
 
     public partial class Borderless : Window
     {
-        private const int BlurRadius = 5;
-        private const int BorderWidth = 6;
+        private readonly int ResizeBorderWidth;
+
+        public int DropShadowRadius
+        {
+            get { return (int)GetValue(DropShadowRadiusProperty); }
+            set { SetValue(DropShadowRadiusProperty, value); }
+        }
+
+        public static readonly DependencyProperty DropShadowRadiusProperty =
+            DependencyProperty.Register("DropShadowRadius", typeof(int), typeof(Borderless), new PropertyMetadata(0));
 
         /// <summary>
         /// Indicate if the window was snapped on one side
@@ -75,6 +82,8 @@
         /// <param name="e"></param>
         public void OnMouseMove(object sender, MouseEventArgs e)
         {
+            double opacity = this.Opacity;
+
             base.OnMouseMove(e);
 
             if (e.LeftButton == MouseButtonState.Pressed && !this.IsMaximizing)
@@ -121,14 +130,22 @@
                         this.Left = rightBound;
                     }
 
-                    // Take into account the DropShadow effect BlurRadius width
-                    this.Left -= BlurRadius;
-                    this.Top = monitorArea.Offset.y - BlurRadius;
+                    // Take into account the DropShadow effect radius
+                    this.Left -= DropShadowRadius;
+                    this.Top = monitorArea.Offset.y - DropShadowRadius;
 
                     this.WindowState = WindowState.Normal;
                 }
+
+                if (this.AllowsTransparency)
+                {
+                    this.Opacity = opacity / 2;
+                }
+
                 this.DragMove();
             }
+
+            this.Opacity = opacity;
 
             this.IsMaximizing = false;
 
@@ -136,7 +153,10 @@
         }
 
         public Borderless()
-        {            
+        {
+            SetBorderlessWindow(this);
+            SetChromeWindow(this);
+
             // The InitializeComponent method is being created at compile time 
             // by the XAML Parser and needs to be called at runtime to load the
             // compiled XAML page of a component.            
@@ -156,17 +176,37 @@
             HwndSource source = HwndSource.FromHwnd(hwnd);
             source.AddHook(new HwndSourceHook(WndProc));
 
+            ResizeBorderWidth = this.DropShadowRadius;
+
             EnableDropShadow(this);
             EnableResizeBorder(this);
+        }
 
-            this.BorderBrush = Brushes.Transparent;
+        private static void SetBorderlessWindow(Window window)
+        {
+            window.WindowStyle = WindowStyle.None;
+            window.BorderBrush = Brushes.Transparent;
 
-            TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
-            TextOptions.SetTextHintingMode(this, TextHintingMode.Auto);
-            TextOptions.SetTextRenderingMode(this, TextRenderingMode.Auto);
+            TextOptions.SetTextFormattingMode(window, TextFormattingMode.Display);
+            //TextOptions.SetTextHintingMode(window, TextHintingMode.Auto);
+            //TextOptions.SetTextRenderingMode(window, TextRenderingMode.Auto);
 
             // For better icon rendering -> RenderOptions.BitmapScalingMode="HighQuality" (same as Fant mode)
-            RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
+            //RenderOptions.SetBitmapScalingMode(window, BitmapScalingMode.HighQuality);
+        }
+
+        private static void SetChromeWindow(Window window)
+        {
+            var chrome = new WindowChrome();
+
+            //chrome.GlassFrameThickness = new Thickness(0,0,0,-1);
+            //chrome.NonClientFrameEdges = NonClientFrameEdges.None;
+            //chrome.CornerRadius = new CornerRadius(0);
+
+            // Required allow the custom title bar commands to work
+            chrome.CaptionHeight = 0;
+
+            WindowChrome.SetWindowChrome(window, chrome);
         }
 
         /// <summary>
@@ -316,7 +356,7 @@
                                                                      
                                 DisableDropShadow(window);
 
-                                UpdateResizeBorder(window, monitorArea,window.Left, window.Top, width, height);
+                                UpdateResizeBorder(window, monitorArea, window.Left, window.Top, width, height);
                             }
                             else
                             {
@@ -403,10 +443,12 @@
         /// <param name="height"></param>
         private static void UpdateResizeBorder(Window window, MonitorArea monitorArea, double left, double top, double width, double height)
         {
-            double leftBorder   = left <= monitorArea.Offset.x ? 0 : BorderWidth;
-            double rightBorder  = left + width >= SystemParameters.VirtualScreenWidth ? 0 : BorderWidth;
-            double topBorder    = top <= monitorArea.Offset.y ? 0 : BorderWidth;
-            double bottomBorder = top + height >= SystemParameters.VirtualScreenHeight ? 0 : BorderWidth;
+            double borderWidth = (window as Borderless).ResizeBorderWidth;
+
+            double leftBorder   = left <= monitorArea.Offset.x ? 0 : borderWidth;
+            double rightBorder  = left + width >= SystemParameters.VirtualScreenWidth ? 0 : borderWidth;
+            double topBorder    = top <= monitorArea.Offset.y ? 0 : borderWidth;
+            double bottomBorder = top + height >= SystemParameters.VirtualScreenHeight ? 0 : borderWidth;
 
             EnableResizeBorder(window, leftBorder, topBorder, rightBorder, bottomBorder);            
         }
@@ -448,11 +490,13 @@
 
             if (dropShadowEffect == null)
             {
-                dropShadowEffect             = new DropShadowEffect();
-                dropShadowEffect.BlurRadius  = BlurRadius;
-                dropShadowEffect.ShadowDepth = 0;
-                dropShadowEffect.Opacity     = 0.8;
-                dropShadowEffect.Color       = Colors.Black;
+                dropShadowEffect               = new DropShadowEffect();
+                dropShadowEffect.BlurRadius    = (window as Borderless).DropShadowRadius; // Default is 5
+                dropShadowEffect.Direction     = 315;  // Default is 315              
+                dropShadowEffect.ShadowDepth   = 2; // Default is 5
+                dropShadowEffect.Opacity       = 0.8; // Defaul is 1
+                dropShadowEffect.Color         = Colors.Black;
+                dropShadowEffect.RenderingBias = RenderingBias.Performance; // Default is Performance
 
                 window.Effect = dropShadowEffect;
             }
@@ -469,18 +513,14 @@
 
         private static void EnableResizeBorder(Window window)
         {
-            EnableResizeBorder(window, BorderWidth, BorderWidth, BorderWidth, BorderWidth);
+            double borderWidth = (window as Borderless).ResizeBorderWidth;
+
+            EnableResizeBorder(window, borderWidth, borderWidth, borderWidth, borderWidth);
         }
 
         private static void EnableResizeBorder(Window window, double left, double top, double right, double bottom)
         {
             var chrome = WindowChrome.GetWindowChrome(window);
-
-            if (chrome == null)
-            {
-                chrome = new WindowChrome();
-                chrome.CaptionHeight = 0;
-            }
 
             chrome.ResizeBorderThickness = new Thickness(left, top, right, bottom);
 
@@ -530,12 +570,9 @@
         {
             Point position = e.GetPosition(null);
 
-            if (sender is DockPanel)
+            if (e.ChangedButton == MouseButton.Right)
             {
-                if (e.ChangedButton == MouseButton.Right)
-                {
-                    ShowSystemMenu(position);
-                }
+                ShowSystemMenu(position);
             }
             else if (e.ChangedButton == MouseButton.Left)
             {
