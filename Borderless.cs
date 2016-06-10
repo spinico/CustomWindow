@@ -183,6 +183,7 @@
         {
             window.WindowStyle = WindowStyle.None;
             window.BorderBrush = Brushes.Transparent;
+            window.AllowsTransparency = true;
 
             TextOptions.SetTextFormattingMode(window, TextFormattingMode.Display);
             //TextOptions.SetTextHintingMode(window, TextHintingMode.Auto);
@@ -196,9 +197,10 @@
         {
             var chrome = new WindowChrome();
 
-            //chrome.GlassFrameThickness = new Thickness(0,0,0,-1);
+            chrome.GlassFrameThickness = new Thickness(0);
+            chrome.CornerRadius = new CornerRadius(0);
+
             //chrome.NonClientFrameEdges = NonClientFrameEdges.None;
-            //chrome.CornerRadius = new CornerRadius(0);
 
             // Required allow the custom title bar commands to work
             chrome.CaptionHeight = 0;
