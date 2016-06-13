@@ -8,7 +8,7 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Custom Window Demo")]
-[assembly: AssemblyDescription("A borderless WPF window demo")]
+[assembly: AssemblyDescription("A borderless themable WPF window demo")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Custom Window Demo")]
