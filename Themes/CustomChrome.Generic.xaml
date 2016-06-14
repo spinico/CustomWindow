@@ -184,7 +184,7 @@
             </Trigger>
             <Trigger Property="IsActive" Value="False">
                 <Setter TargetName="PART_WindowBorder" Property="BorderBrush" Value="DarkGray" />
-                <Setter TargetName="PART_LayoutGrid" Property="Opacity" Value="0.5" />
+                <Setter TargetName="PART_LayoutGrid" Property="Opacity" Value="0.75" />
                 <Setter TargetName="PART_HeaderBorder" Property="Background" Value="Gray" />
                 <Setter TargetName="PART_Icon" Property="Source" Value="{StaticResource LogoInactive}" />
                 <Setter TargetName="PART_Title" Property="Foreground" Value="DarkGray" />
