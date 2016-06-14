@@ -463,7 +463,10 @@
             window.WindowStyle = WindowStyle.None;            
             window.BorderBrush = Brushes.Transparent;
             window.AllowsTransparency = true;
-            
+
+            //TextOptions.SetTextFormattingMode(window, TextFormattingMode.Display);
+            //RenderOptions.SetBitmapScalingMode(window, BitmapScalingMode.HighQuality);
+
             if (window.ResizeMode != ResizeMode.NoResize)
             {
                 EnableResizeBorder(window);
