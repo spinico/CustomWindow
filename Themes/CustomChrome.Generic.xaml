@@ -75,8 +75,6 @@
     <Style x:Key="{ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=HeaderBorderStyle}" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="#FF1863A2"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
     </Style>
 
     <Style x:Key="{ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=IconImageStyle}"  TargetType="{x:Type Image}">
@@ -194,6 +192,8 @@
     </ControlTemplate>
 
     <Style TargetType="{x:Type local:CustomChrome}">
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
         <Setter Property="Template"
 				Value="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowTemplate}}" />
     </Style>
