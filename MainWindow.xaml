@@ -15,7 +15,7 @@
         WindowStartupLocation="CenterScreen"
         EnableDropShadow="True"        
         ResizeBorderWidth="5"
-        DropShadowBlurRadius="7"
+        DropShadowBlurRadius="10"
         DropShadowOpacity="0.8"
         Background="White"
         Topmost="False"
@@ -42,7 +42,7 @@
             </TextBlock>
         </StackPanel>
         
-        <RichTextBox Grid.Row="1" Margin="6,6,6,10" 
+        <RichTextBox Grid.Row="1"
                      IsReadOnly="True" 
                      Background="Transparent" 
                      BorderThickness="0" 
