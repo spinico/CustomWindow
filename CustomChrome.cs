@@ -220,7 +220,8 @@
 
         private void OnDragControlMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (ResizeMode != ResizeMode.NoResize)
+            if (this.ResizeMode != ResizeMode.NoResize && 
+                this.ResizeMode != ResizeMode.CanMinimize)
             {
                 if (this.IsSnapped)
                 {
@@ -432,9 +433,6 @@
 
         public CustomChrome()
         {
-            SetChromeWindow(this);
-            SetCustomWindow(this);
-
             // The InitializeComponent method is being created at compile time 
             // by the XAML Parser and needs to be called at runtime to load the
             // compiled XAML page of a component.            
@@ -448,6 +446,11 @@
             {
                 initializer.Invoke(this, null);
             }
+
+            // The following methods must be called after the initializer
+            // to get the values set from the XAML markup (ex. the ResizeMode)
+            SetChromeWindow(this);
+            SetCustomWindow(this);
 
             // Adding hook to WndProc
             IntPtr hwnd = new WindowInteropHelper(this).EnsureHandle();
@@ -467,7 +470,8 @@
             //TextOptions.SetTextFormattingMode(window, TextFormattingMode.Display);
             //RenderOptions.SetBitmapScalingMode(window, BitmapScalingMode.HighQuality);
 
-            if (window.ResizeMode != ResizeMode.NoResize)
+            if (window.ResizeMode != ResizeMode.NoResize && 
+                window.ResizeMode != ResizeMode.CanMinimize)
             {
                 EnableResizeBorder(window);
             }
@@ -616,7 +620,8 @@
         {
             CustomChrome window = GetWindow(hWnd) as CustomChrome;
 
-            if (window.ResizeMode != ResizeMode.NoResize)
+            if (window.ResizeMode != ResizeMode.NoResize &&
+                window.ResizeMode != ResizeMode.CanMinimize)
             {
                 switch (msg)
                 {
@@ -830,23 +835,22 @@
         {
             var dropShadowEffect = window.Effect as DropShadowEffect;
 
-            if (dropShadowEffect == null)
-            {
-                dropShadowEffect = new DropShadowEffect();                                
-                dropShadowEffect.Direction = 315;  // Default is 315              
-                dropShadowEffect.ShadowDepth = 0; // Default is 5
-                dropShadowEffect.Color = Colors.Black;
-                dropShadowEffect.RenderingBias = RenderingBias.Performance; // Default is Performance
-
-                window.Effect = dropShadowEffect;
-            }
-
             if (window.EnableDropShadow)
-            {
+            {                
+                if (dropShadowEffect == null)
+                {
+                    dropShadowEffect = new DropShadowEffect();                                
+                    dropShadowEffect.Direction = 315;  // Default is 315              
+                    dropShadowEffect.ShadowDepth = 0; // Default is 5
+                    dropShadowEffect.Color = Colors.Black;
+                    dropShadowEffect.RenderingBias = RenderingBias.Performance; // Default is Performance
+
+                    window.Effect = dropShadowEffect;
+                }
+
                 // Minimum allowed blur radius is 2, if less than 2, 
                 // the resize border wont work (default is 5)
                 dropShadowEffect.BlurRadius = Math.Max(window.DropShadowBlurRadius, 2);
-
                 dropShadowEffect.Opacity = window.DropShadowOpacity;
             }
             else
@@ -861,13 +865,27 @@
 
             if (dropShadowEffect != null)
             {
-                // To "disable" drop shadow effet, we must use an opacity > 0
-                // otherwise the resizing border will not work (default is 1) 
-                // 0.05 was tested to be visible "enough" to make it work
-                dropShadowEffect.Opacity = 0.05;
+                // Fix to allow window resize behavior when AllowTransparency is "true"
+                // and drop shadow is disabled
+                if (window.ResizeMode != ResizeMode.NoResize &&
+                    window.ResizeMode != ResizeMode.CanMinimize)
+                {
+                    // To "disable" drop shadow effet, we must use an opacity > 0
+                    // otherwise the resizing border will not work (default is 1) 
+                    // 0.05 was tested to be visible "enough" to make it work
+                    dropShadowEffect.Opacity = 0.05;
 
-                // Force a blur radius to allow resizing handle to be large enough
-                dropShadowEffect.BlurRadius = 10;
+                    // Force a blur radius to allow resizing handle to work
+                    // When the drop shadow opacity is nearly 0, the blur radius 
+                    // also shrink, a value of 10 seems to be large enough
+                    dropShadowEffect.BlurRadius = 10;
+
+                }
+                else
+                {
+                    dropShadowEffect.Opacity = 0;
+                    dropShadowEffect.BlurRadius = 0;
+                }
             }
         }
 
