@@ -35,9 +35,9 @@
                     <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
                     <Condition Binding="{Binding IsDragging, RelativeSource={RelativeSource TemplatedParent}}" Value="False"/>
                 </MultiDataTrigger.Conditions>
-                <Setter Property="Foreground" Value="Black" />
-                <Setter Property="Background" Value="#FF269DFF" />
-                <Setter Property="BorderBrush" Value="#FF269DFF" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Background" Value="#FF008CFF" />
+                <Setter Property="BorderBrush" Value="#FF008CFF" />
             </MultiDataTrigger>
 
             <Trigger Property="IsPressed" Value="True">
@@ -45,8 +45,8 @@
                     <BeginStoryboard>
                         <Storyboard>
                             <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Foreground.(SolidColorBrush.Color)" To="White" />
-                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Background.(SolidColorBrush.Color)" To="#FF0E3E63" />
-                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="BorderBrush.Color" To="#FF0E3E63" />
+                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Background.(SolidColorBrush.Color)" To="#FF46BCFF" />
+                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="BorderBrush.Color" To="#FF46BCFF" />
                         </Storyboard>
                     </BeginStoryboard>
                 </Trigger.EnterActions>
@@ -63,7 +63,7 @@
     </Style>
 
     <Style x:Key="{ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowBorderStyle}" TargetType="{x:Type Border}">
-        <Setter Property="BorderBrush" Value="Black"/>
+        <Setter Property="BorderBrush" Value="#FF1863A2"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"/>
     </Style>
@@ -113,7 +113,7 @@
     </Style>
 
     <ControlTemplate x:Key="{ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowTemplate}"
-					 TargetType="local:CustomChrome">
+                     TargetType="local:CustomChrome">
 
         <Border x:Name="PART_ResizeBorder" 
                 Style="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=ResizeBorderStyle}}" >
@@ -195,7 +195,7 @@
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
         <Setter Property="Template"
-				Value="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowTemplate}}" />
+                Value="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowTemplate}}" />
     </Style>
 
 </ResourceDictionary>
