@@ -91,6 +91,16 @@
             DependencyProperty.Register("DropShadowOpacity", typeof(double), typeof(CustomChrome), 
                 new PropertyMetadata(DependencyPropertyDefault.DropShadowOpacity));
 
+        public Color DropShadowColor
+        {
+            get { return (Color)GetValue(DropShadowColorProperty); }
+            set { SetValue(DropShadowColorProperty, value); }
+        }
+        
+        public static readonly DependencyProperty DropShadowColorProperty =
+            DependencyProperty.Register("DropShadowColor", typeof(Color), typeof(CustomChrome),
+                new PropertyMetadata(Colors.Black));
+
         public bool IsDragging
         {
             get { return (bool)GetValue(IsDraggingProperty); }
@@ -178,7 +188,7 @@
                 dragControl.MouseDoubleClick += OnDragControlMouseDoubleClick;
             }
             
-            var windowBorder = GetChildControl<Border>("PART_WindowBorder");
+            var windowBorder = GetChildControl<Border>("PART_WindowBorder");        
 
             // Set a minimum window height if not specified
             var headerRowDefinition = GetChildControl<RowDefinition>("PART_HeaderRowDefinition");
@@ -417,9 +427,13 @@
 
                 this.IsDragging = true;
 
-                this.DragMove();
+                HideDropShadow(this);
+
+                this.DragMove();                
 
                 this.IsDragging = false;
+
+                ShowDropShadow(this);
 
                 this.Opacity = opacity;
             }
@@ -458,29 +472,28 @@
             source.AddHook(new HwndSourceHook(WindowHookProc));
         }
 
-        //protected override void OnLocationChanged(EventArgs e) { }
-        //protected override void OnMouseMove(MouseEventArgs e) { base.OnMouseMove(e); }
-
         private static void SetCustomWindow(CustomChrome window)
         {
-            window.WindowStyle = WindowStyle.None;            
+            window.WindowStyle = WindowStyle.None;
             window.BorderBrush = Brushes.Transparent;
             window.AllowsTransparency = true;
 
             //TextOptions.SetTextFormattingMode(window, TextFormattingMode.Display);
-            //RenderOptions.SetBitmapScalingMode(window, BitmapScalingMode.HighQuality);
+            //RenderOptions.SetBitmapScalingMode(window, BitmapScalingMode.HighQuality);                 
+        }
 
-            if (window.ResizeMode != ResizeMode.NoResize && 
-                window.ResizeMode != ResizeMode.CanMinimize)
-            {
-                EnableResizeBorder(window);
-            }
-            else
-            {
-                DisableResizeBorder(window);
-            }
+        protected override void OnActivated(EventArgs e)
+        {
+            ShowDropShadow(this);
 
-            ShowDropShadow(window);
+            base.OnActivated(e);
+        }
+
+        protected override void OnDeactivated(EventArgs e)
+        {
+            HideDropShadow(this);
+
+            base.OnDeactivated(e);
         }
 
         private static void SetChromeWindow(Window window)
@@ -620,103 +633,99 @@
         {
             CustomChrome window = GetWindow(hWnd) as CustomChrome;
 
-            if (window.ResizeMode != ResizeMode.NoResize &&
-                window.ResizeMode != ResizeMode.CanMinimize)
+            switch (msg)
             {
-                switch (msg)
+                // Toggle the DropShadowEffect when window is snapped or maximized
+                case WM_SIZE:
                 {
-                    // Toggle the DropShadowEffect when window is snapped or maximized
-                    case WM_SIZE:
-                    {
-                        int resizing = (int)wParam;
+                    int resizing = (int)wParam;
 
-                        if (resizing == SIZE_RESTORED)
-                        {
-                            MonitorArea monitorArea = GetMonitorArea(hWnd);
-
-                            if (monitorArea != null)
-                            {
-                                // LOWORD
-                                int width = ((int)lParam & 0x0000ffff); 
-                                
-                                // HIWORD
-                                int height = (int)((int)lParam & 0xffff0000) >> 16;
-
-                                // Detect if window was snapped to screen side of current monitor
-                                // or if spanning width on multiple monitors (to avoid unsnapping)
-                                if (height == monitorArea.Work.Height || 
-                                    width >= SystemParameters.VirtualScreenWidth)
-                                {
-                                    window.IsSnapped = true;
-
-                                    HideDropShadow(window);
-
-                                    UpdateResizeBorder(window, monitorArea, window.Left, window.Left + width);
-                                }
-                                else
-                                {
-                                    window.IsSnapped = false;
-
-                                    ShowDropShadow(window);
-
-                                    EnableResizeBorder(window);
-                                }                           
-                            }
-                        }
-                        else if (resizing == SIZE_MAXIMIZED)
-                        {
-                            // Required when maximized from dragging window
-                            DisableResizeBorder(window);
-                        }
-                    }
-                    break;
-
-
-                    // To handle proper resizing of the custom window
-                    case WM_GETMINMAXINFO:
+                    if (resizing == SIZE_RESTORED)
                     {
                         MonitorArea monitorArea = GetMonitorArea(hWnd);
 
                         if (monitorArea != null)
                         {
-                            MINMAXINFO mmi = (MINMAXINFO)Marshal.PtrToStructure(lParam, typeof(MINMAXINFO));
-                            
-                            mmi.ptMaxPosition.x  = monitorArea.Offset.x;
-                            mmi.ptMaxPosition.y  = monitorArea.Offset.y;
-                            mmi.ptMaxSize.x      = monitorArea.Work.Width;
-                            mmi.ptMaxSize.y      = monitorArea.Work.Height;
+                            // LOWORD
+                            int width = ((int)lParam & 0x0000ffff); 
+                                
+                            // HIWORD
+                            int height = (int)((int)lParam & 0xffff0000) >> 16;
 
-                            // To support minimum window size
-                            mmi.ptMinTrackSize.x = (int) window.MinWidth;
-                            mmi.ptMinTrackSize.y = (int) window.MinHeight;
+                            // Detect if window was snapped to screen side of current monitor
+                            // or if spanning width on multiple monitors (to avoid unsnapping)
+                            if (height == monitorArea.Work.Height || 
+                                width >= SystemParameters.VirtualScreenWidth)
+                            {
+                                window.IsSnapped = true;
 
-                            Marshal.StructureToPtr(mmi, lParam, true);
-                            handled = true;
+                                HideDropShadow(window);
+
+                                UpdateResizeBorder(window, monitorArea, window.Left, window.Left + width);
+                            }
+                            else
+                            {
+                                window.IsSnapped = false;
+
+                                ShowDropShadow(window);
+
+                                EnableResizeBorder(window);
+                            }                           
                         }
                     }
-                    break;
-
-                    // To activate/deactivate border resize handles from window position
-                    case WM_WINDOWPOSCHANGED:
+                    else if (resizing == SIZE_MAXIMIZED)
                     {
-                        WINDOWPOS windowPos = (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS));
+                        // Required when maximized from dragging window
+                        DisableResizeBorder(window);
+                    }
+                }
+                break;
 
-                        // When window is snapped and position changes
-                        if ((windowPos.flags & SWP_NOMOVE) != SWP_NOMOVE)
+
+                // To handle proper resizing of the custom window
+                case WM_GETMINMAXINFO:
+                {
+                    MonitorArea monitorArea = GetMonitorArea(hWnd);
+
+                    if (monitorArea != null)
+                    {
+                        MINMAXINFO mmi = (MINMAXINFO)Marshal.PtrToStructure(lParam, typeof(MINMAXINFO));
+                            
+                        mmi.ptMaxPosition.x  = monitorArea.Offset.x;
+                        mmi.ptMaxPosition.y  = monitorArea.Offset.y;
+                        mmi.ptMaxSize.x      = monitorArea.Work.Width;
+                        mmi.ptMaxSize.y      = monitorArea.Work.Height;
+
+                        // To support minimum window size
+                        mmi.ptMinTrackSize.x = (int) window.MinWidth;
+                        mmi.ptMinTrackSize.y = (int) window.MinHeight;
+
+                        Marshal.StructureToPtr(mmi, lParam, true);
+                        handled = true;
+                    }
+                }
+                break;
+
+                // To activate/deactivate border resize handles from window position
+                case WM_WINDOWPOSCHANGED:
+                {
+                    WINDOWPOS windowPos = (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS));
+
+                    // When window is snapped and position changes
+                    if ((windowPos.flags & SWP_NOMOVE) != SWP_NOMOVE)
+                    {
+                        if (window.IsSnapped)
                         {
-                            if (window.IsSnapped)
-                            {
-                                MonitorArea monitorArea = GetMonitorArea(hWnd);
+                            MonitorArea monitorArea = GetMonitorArea(hWnd);
 
-                                if (monitorArea != null)
-                                {
-                                    UpdateResizeBorder(window, monitorArea, windowPos.x, windowPos.x + windowPos.cx);
-                                }
+                            if (monitorArea != null)
+                            {
+                                UpdateResizeBorder(window, monitorArea, windowPos.x, windowPos.x + windowPos.cx);
                             }
                         }
                     }
-                    break;
                 }
+                break;
             }
 
             return IntPtr.Zero;
@@ -831,42 +840,58 @@
             WindowChrome.SetWindowChrome(window, chrome);                        
         }
 
+        /// <summary>
+        /// Create and show (if enabled) the drop shadow effect 
+        /// around the window border
+        /// </summary>
+        /// <param name="window"></param>
+        /// <remarks>
+        /// We need to always create the drop shadow effect
+        /// even if not enabled to be able to support resizing        
+        /// </remarks>
         private static void ShowDropShadow(CustomChrome window)
-        {
+        {            
             var dropShadowEffect = window.Effect as DropShadowEffect;
-
-            if (window.EnableDropShadow)
-            {                
-                if (dropShadowEffect == null)
-                {
-                    dropShadowEffect = new DropShadowEffect();                                
-                    dropShadowEffect.Direction = 315;  // Default is 315              
-                    dropShadowEffect.ShadowDepth = 0; // Default is 5
-                    dropShadowEffect.Color = Colors.Black;
-                    dropShadowEffect.RenderingBias = RenderingBias.Performance; // Default is Performance
-
-                    window.Effect = dropShadowEffect;
-                }
-
-                // Minimum allowed blur radius is 2, if less than 2, 
-                // the resize border wont work (default is 5)
-                dropShadowEffect.BlurRadius = Math.Max(window.DropShadowBlurRadius, 2);
-                dropShadowEffect.Opacity = window.DropShadowOpacity;
+                
+            if (dropShadowEffect == null)                     
+            {
+                window.Effect = CreateDropShadowEffect(
+                    window.DropShadowColor, 
+                    window.DropShadowOpacity, 
+                    window.DropShadowBlurRadius);
             }
             else
+            {                    
+                dropShadowEffect.Color = window.DropShadowColor;
+                dropShadowEffect.Opacity = window.DropShadowOpacity;
+                dropShadowEffect.BlurRadius = Math.Max(window.DropShadowBlurRadius, 2);                                        
+            }
+
+            // Set the border to make the effect visible when window 
+            // cannot resize or can only minimize
+            if (window.ResizeMode == ResizeMode.NoResize ||
+                window.ResizeMode == ResizeMode.CanMinimize)
             {
+                double borderWidth = GetResizeBorderWidth(window);
+                window.BorderThickness = new Thickness(borderWidth);
+            }
+                        
+            if (!window.EnableDropShadow)
+            { 
                 HideDropShadow(window);
             }   
         }
 
-        private static void HideDropShadow(Window window)
-        {
+        private static void HideDropShadow(CustomChrome window)
+        {            
             var dropShadowEffect = window.Effect as DropShadowEffect;
 
             if (dropShadowEffect != null)
             {
-                // Fix to allow window resize behavior when AllowTransparency is "true"
-                // and drop shadow is disabled
+                // By making the effect nearly invisible but yet still enough
+                // visible this hack allow to "hide" the drop shadow but still 
+                // be able to show the resizing handles when AllowTransparency 
+                // is set to "true"
                 if (window.ResizeMode != ResizeMode.NoResize &&
                     window.ResizeMode != ResizeMode.CanMinimize)
                 {
@@ -879,7 +904,6 @@
                     // When the drop shadow opacity is nearly 0, the blur radius 
                     // also shrink, a value of 10 seems to be large enough
                     dropShadowEffect.BlurRadius = 10;
-
                 }
                 else
                 {
@@ -887,6 +911,23 @@
                     dropShadowEffect.BlurRadius = 0;
                 }
             }
+        }
+
+        private static DropShadowEffect CreateDropShadowEffect(Color color, double opacity, double blurRadius)
+        {
+            var dropShadowEffect = new DropShadowEffect();
+
+            dropShadowEffect.Direction = 315;  // Default is 315              
+            dropShadowEffect.ShadowDepth = 0; // Default is 5                    
+            dropShadowEffect.RenderingBias = RenderingBias.Quality; // Default is Performance
+            dropShadowEffect.Color = color;
+            dropShadowEffect.Opacity = opacity;
+
+            // Minimum allowed blur radius is 2, if less than 2, 
+            // the resize border wont work (default is 5)
+            dropShadowEffect.BlurRadius = Math.Max(blurRadius, 2);
+
+            return dropShadowEffect;
         }
 
         #region System Menu

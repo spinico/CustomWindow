@@ -14,9 +14,10 @@
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         EnableDropShadow="True"        
-        ResizeBorderWidth="5"
+        ResizeBorderWidth="7"
         DropShadowBlurRadius="10"
-        DropShadowOpacity="0.8"
+        DropShadowOpacity="1"
+        DropShadowColor="#FF1863A2"
         Background="White"
         Topmost="False"
         >
