@@ -477,7 +477,8 @@
             window.WindowStyle = WindowStyle.None;
             window.BorderBrush = Brushes.Transparent;
             window.AllowsTransparency = true;
-
+            window.SnapsToDevicePixels = true;
+            
             //TextOptions.SetTextFormattingMode(window, TextFormattingMode.Display);
             //RenderOptions.SetBitmapScalingMode(window, BitmapScalingMode.HighQuality);                 
         }

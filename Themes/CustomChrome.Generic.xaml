@@ -40,17 +40,6 @@
                 <Setter Property="BorderBrush" Value="#FF008CFF" />
             </MultiDataTrigger>
 
-            <Trigger Property="IsPressed" Value="True">
-                <Trigger.EnterActions>
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Foreground.(SolidColorBrush.Color)" To="White" />
-                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Background.(SolidColorBrush.Color)" To="#FF46BCFF" />
-                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="BorderBrush.Color" To="#FF46BCFF" />
-                        </Storyboard>
-                    </BeginStoryboard>
-                </Trigger.EnterActions>
-            </Trigger>
             <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
                 <Setter Property="Foreground" Value="DarkGray"/>
             </DataTrigger>            
@@ -63,7 +52,7 @@
     </Style>
 
     <Style x:Key="{ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowBorderStyle}" TargetType="{x:Type Border}">
-        <Setter Property="BorderBrush" Value="#FF1863A2"/>
+        <Setter Property="BorderBrush" Value="Black"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"/>
     </Style>
@@ -106,7 +95,51 @@
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
-    
+
+    <Style x:Key="{ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=MinMaxWindowButtonStyle}" TargetType="{x:Type Button}"
+           BasedOn="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowButtonStyle}}">
+        <Style.Triggers>
+            <Trigger Property="IsPressed" Value="True">
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Foreground.(SolidColorBrush.Color)" To="White" />
+                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Background.(SolidColorBrush.Color)" To="#FF46BCFF" />
+                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="BorderBrush.Color" To="#FF46BCFF" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="{ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=CloseWindowButtonStyle}" TargetType="{x:Type Button}"
+           BasedOn="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowButtonStyle}}">
+        <Style.Triggers>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                    <Condition Binding="{Binding IsDragging, RelativeSource={RelativeSource TemplatedParent}}" Value="False"/>
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Background" Value="#FFBF2D2D" />
+                <Setter Property="BorderBrush" Value="#FFBF2D2D" />
+            </MultiDataTrigger>
+
+            <Trigger Property="IsPressed" Value="True">
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Foreground.(SolidColorBrush.Color)" To="White" />
+                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="Background.(SolidColorBrush.Color)" To="#FFFF3C3C" />
+                            <ColorAnimation Duration="0:0:0.1" Storyboard.TargetProperty="BorderBrush.Color" To="#FFFF3C3C" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="{ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=ContentBorderStyle}" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="#FFF1F1F1"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -143,11 +176,11 @@
                         <Grid>
                             <DockPanel x:Name="PART_TitleBar">
                                 <Button x:Name="PART_Close" DockPanel.Dock="Right" ToolTip="Close this window" Content="r"
-                                        Style="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowButtonStyle}}"/>
+                                        Style="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=CloseWindowButtonStyle}}"/>
                                 <Button x:Name="PART_Maximize" DockPanel.Dock="Right" ToolTip="Maximize this window" Content="1" 
-                                        Style="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowButtonStyle}}"/>
+                                        Style="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=MinMaxWindowButtonStyle}}"/>
                                 <Button x:Name="PART_Minimize" DockPanel.Dock="Right" ToolTip="Minimize this window" Content="0"
-                                        Style="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=WindowButtonStyle}}"/>
+                                        Style="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=MinMaxWindowButtonStyle}}"/>
                                 <Image x:Name="PART_Icon" Width="24" Height="24" Margin="0,1,0,0"
                                        Style="{StaticResource {ComponentResourceKey TypeInTargetAssembly=local:CustomChrome, ResourceId=IconImageStyle}}"/>
                                 <StatusBar x:Name="PART_Drag" Background="Transparent">
