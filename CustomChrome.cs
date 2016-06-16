@@ -659,8 +659,6 @@
                             {
                                 window.IsSnapped = true;
 
-                                HideDropShadow(window);
-
                                 UpdateResizeBorder(window, monitorArea, window.Left, window.Left + width);
                             }
                             else
