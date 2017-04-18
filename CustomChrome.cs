@@ -931,59 +931,34 @@
 
         #region System Menu
 
-        private const Int32 WM_SYSCOMMAND = 0x112;
-        private const UInt32 TPM_LEFTALIGN = 0x0000;
-        private const UInt32 TPM_RETURNCMD = 0x0100;
-        private const UInt32 MF_ENABLED = 0x00000000;
-        private const UInt32 MF_GRAYED = 0x00000001;
-        private const UInt32 MF_DISABLED = 0x00000002;
-        private const UInt32 SC_MAXIMIZE = 0xF030;
-        private const UInt32 SC_MINIMIZE = 0xF020;
-        private const UInt32 SC_RESTORE = 0xF120;
-        private const UInt32 SC_MOVE = 0xF010;
-        private const UInt32 SC_SIZE = 0xF000;
-        private const UInt32 SC_CLOSE = 0xF060;
-        private const UInt32 MF_BYCOMMAND = 0x00000000;
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetCursorPos(out POINT lpPoint);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+        private static extern int SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
 
-        [DllImport("user32.dll")]
-        private static extern int TrackPopupMenuEx(IntPtr hmenu, uint fuFlags, int x, int y, IntPtr hwnd, IntPtr lptpm);
+        private void ShowSystemMenu(Window window, Point? point = null)
+        {
+            const int WM_POPUPSYSTEMMENU = 0x0313;
 
-        [DllImport("user32.dll")]
-        private static extern IntPtr PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        private static extern bool EnableMenuItem(IntPtr hMenu, uint uIDEnableItem, uint uEnable);
-
-        [DllImport("user32.dll")]
-        private static extern bool DeleteMenu(IntPtr hMenu, uint uPosition, uint uFlags);
-
-        private static void ShowSystemMenu(Window window, Point position, int offset = 10) 
-        {            
             IntPtr hWnd = new WindowInteropHelper(window).Handle;
-            IntPtr wMenu = GetSystemMenu(hWnd, false);
-            Point point = window.PointToScreen(position);
 
-            // To gray out menu item
-            // EnableMenuItem(wMenu, SC_SIZE, MF_GRAYED);
-            // EnableMenuItem(wMenu, SC_MAXIMIZE, MF_GRAYED);
+            IntPtr lParam;
 
-            if (window.ResizeMode == ResizeMode.NoResize)
+            if (point == null)
             {
-                DeleteMenu(wMenu, SC_SIZE, MF_BYCOMMAND);
-                DeleteMenu(wMenu, SC_RESTORE, MF_BYCOMMAND);
-                DeleteMenu(wMenu, SC_MAXIMIZE, MF_BYCOMMAND);
-                DeleteMenu(wMenu, SC_MINIMIZE, MF_BYCOMMAND);
+                POINT ptScreen;
+                GetCursorPos(out ptScreen);
+                lParam = new IntPtr((ptScreen.y << 16) + ptScreen.x + 1);
             }
-           
-            // On error or if user cancel, value returned by TrackPopupMenuEx is 0
-            int value = TrackPopupMenuEx(wMenu, TPM_LEFTALIGN | TPM_RETURNCMD, (int)point.X, (int)point.Y + offset, hWnd, IntPtr.Zero);            
-            if (value != 0)
+            else
             {
-                PostMessage(hWnd, WM_SYSCOMMAND, new IntPtr(value), IntPtr.Zero);
-            }            
+                Point ptScreen = PointToScreen((Point)point);
+                lParam = new IntPtr(((int)ptScreen.Y << 16) + (int)ptScreen.X + 1);
+            }
+
+            SendMessage(hWnd, WM_POPUPSYSTEMMENU, IntPtr.Zero, lParam);            
         }
 
         #endregion System Menu
